@@ -221,7 +221,71 @@ public class LoadDifference{
 
 ​           执行类变量赋值和静态代码块
 
+#### JAVA内存模型知多少?
 
+​     内存简介
+
+​     32位处理器:2^32的可寻址范围(4GB)
+
+​     64位处理器:2^64的可寻址范围
+
+​     地址空间划分:
+
+​        内核空间:
+
+​        用户空间:java进程实际运行时的空间
+
+​     JVM内存模型-JDK8
+
+   线程私有:虚拟机栈(java方法SOF&OOM)，
+
+​                       Java方法执行的内存模型
+
+​                       包含多个栈帧（每个栈帧包括:局部变量表，操作数栈，动态链接，返回地址等）
+
+​                           局部变量表:包含方法执行过程中的所有变量(this引用)
+
+​                           操作数栈:入栈，出栈，复制，交换，产生消费变量
+
+```java
+public class ByteCodeSample{
+    public static int add(int a,int b){
+        int c =0;
+        c = a+b;
+        return c;
+    }
+   //执行（1,2）
+      
+}
+```
+
+​                                                 
+
+​                   本地方法栈(native方法SOF&OOM)，
+
+​                       与虚拟机栈相似，主要用于标注了native方法
+
+​                   程序计数器（字节码指令 no OOM）
+
+​                       当前线程所执行的字节码行号指示器(逻辑)
+
+​                       改变计数器的值来选取下一条需要执行的字节码指令
+
+​                      和线程是一对一的关系，即线程私有
+
+​                      对Java方法计数，如果是Native方法则计数器值为Undefined
+
+​                     不会发生内存泄漏
+
+   线程共享:MetaSpace（类加载信息），堆(常量池:字面量和符号引用OOM)
+
+
+
+#### 递归为什么会引发java.long.stack.overflowerror异常
+
+递归过深，栈帧树超出虚拟机栈深度
+
+虚拟机栈过多会引发java.lang.outofmemoryError异常
 
 
 
