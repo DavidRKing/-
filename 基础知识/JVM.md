@@ -289,6 +289,106 @@ public class ByteCodeSample{
 
 
 
+#### 元空间(MetaSpace)与永久代(PermGen)的区别
+
+  类的元数据 ，class的信息。（方法区等）
+
+  元空间使用本地内存，而永久代使用的是JVM的内存
+
+  java.lang.outOfMemoryError:PermGen space不复存在，因为使用了本地内存.
+
+#### MetaSpace相比PermGen的优势
+
+   字符串常量池存在永久代中，容易出现性能问题和内存溢出。
+
+   类和方法的信息大小难以确定，给永久代指定大小带来困难。
+
+   永久代会为GC带来不必要的复杂性
+
+   方便HotSpace与其他JVM如Jrockit的集成
+
+#### Java堆(Heap)
+
+  对象实例的分配区域
+
+  GC管理的主要区域
+
+#### JVM三大性能调优参数-Xms -Xmx -Xss的含义
+
+  java -Xms128m -Xmx128m -Xss256k -jar xxxx.jar
+
+  -Xss:规定了每个线程虚拟机栈(堆栈)的大小
+
+ -Xms:堆得初始值
+
+ -Xmx:堆能达到的最大值
+
+#### Java内存模型中堆和栈的区别-内存分配策略
+
+  静态存储:编译时确定每个数据目标在运行时的存储空间需求。
+
+  栈式存储:数据区需求在编译时未知，运行时模块入口前确定。
+
+  堆式存储:编译时或运行时模块入口都无法确定，动态分配。
+
+联系:引用对象、数组时、栈里定义变量保存堆中目标的首地址。
+
+​    Person p = new Person()；（堆和栈中怎么分配的）
+
+管理方式:栈自动释放，堆需要GC
+
+空间大小:栈比堆小
+
+碎片相关:栈产生的碎片远小于堆
+
+分配方式:栈支持静态分配和动态分配，而堆仅支持动态分配
+
+效率:栈的效率比堆高
+
+#### 元空间、堆、栈独占部分的联系-内存角度
+
+元空间-CLASS:HelloWorld-Method:sayHello\setName\main-Field:name
+
+​             CLASS:System
+
+Java堆:Object:String("test");
+
+​            Object:HelloWorld
+
+线程独占:Parameter reference:"test" to String object
+
+​               :Variable reference:"hw" to HelloWorld object
+
+​               :Local Variables: a with 1,lineNo
+
+#### 不同JDK版本之间intern()方法的区别-JDK6 VS JDK6+
+
+```java
+String s = new String("a");
+//jk6: 当调用intern方法时，如果字符串常量池先前已创建出该字符串对象，则返回池中的该字符串的引用。
+//否则，将此字符串对象添加到字符串常量池中，并且返回该字符串对象的引用。
+
+//Jdk6+:当调用intern方法时，如果字符串常量池先前已创建出该字符串对象，则返回池中的该字符串的引用。
+//否则，如果该字符串对象已经存在于java堆中，则将堆中的此对象的引用添加到字符串常量池，并且返回该引用，
+//如果堆中不存在，则在池中创建该字符串并返回引用。
+
+//jdk8将字符串常量池移动到java堆中。避免以前在方法区会引发内存溢出
+s.intern();
+
+//jdk 1.6 PermGen space 内存溢出
+public static void main(){
+    for(int i=0;i<1000;i++){
+        getRandomString(1000000).intern();
+    }
+    System.out.println("complete!!!")
+}
+//jdk 7 没问题
+
+
+```
+
+
+
 
 
 
