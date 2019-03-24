@@ -181,8 +181,180 @@ old generation (Tenured space)
 
 ​    使用RMI来进行RPC或管理JDK应用，每小时执行1次FULL GC
 
+#### STOP-the-world
 
+   JVM由于要执行GC而停止了应用程序的执行
 
+   任何一种GC算法中都会发生
 
+   多数GC优化通过减少stop-the-world发生的时间来提高程序性能。（ 高吞吐，低停顿）
+
+#### Safepoint
+
+  分析过程中对象引用关系不会发生变化的点。
+
+  产生Safepoint的地方:方法调用;循环跳转;异常跳转等.
+
+  安全点数量得适中
+
+#### 常见的垃圾收集器
+
+  JVM的运行模式
+
+​     Server:启动较慢,但稳定后，速度要比client块
+
+​     Client:启动较快
+
+#### 垃圾收集器之间的联系
+
+  见深入理解java虚拟机图
+
+ Serial收集器(-XX:+UseSerialGC,复制算法  Client默认收集器)
+
+​     单线程收集，进行垃圾收集器，必须暂停所有工作线程。
+
+​     简单高效，Client模式下默认的年轻代收集器
+
+ ParNew收集器(-XX:+UseParNewGC,复制算法)
+
+​     多线程收集，其余行为、特点和Serial收集器一样。
+
+​     单核执行效率不如Serial,在多核下执行才有优势
+
+ Parallel Scavenge收集器(-XX:+UseParallelGC,复制算法 Server默认收集器)
+
+​     吞吐量=运行用户代码的时间/(运行用户代码时间+垃圾收集时间)
+
+​     比起关注用户线程停顿时间，更关注系统的吞吐量
+
+​     在多核下执行才有优势，Server模式下默认的年轻代收集器
+
+​     -XX:+UseAdaptiveSizePolicy:把内存管理的调优任务交给JVM
+
+####  老年代常见的收集器
+
+   Serial Old收集器(-XX:+UseSerialOldGC,标记-整理算法)
+
+​      单线程收集，进行垃圾收集时，必须暂停所有工作线程
+
+​      简单高效，Client模式下默认的老年代收集器
+
+   Parallel Old收集器(-XX:+UseParallelOldGC,标记-整理算法) (JDK 6 以后)
+
+​      多线程，吞吐量优先
+
+   CMS收集器(-XX:+UserConcMarkSweepGC,标记-清除算法)
+
+​      1.初始标记:STOP-THE-WORLD(虚拟机停顿正在执行的任务,从GC ROOTS 开始 扫描只扫描到与他直接关联的对象并做标记,很快)  stop-world
+
+​      2.并发标记:并发追溯标记，程序不会停顿(从1结果，继续向下标记) 
+
+​      3.并发预清理:查找执行并发标记阶段从年轻代晋升到老年代的对象
+
+​      4.重新标记:暂停虚拟机，扫描CMS堆中的剩余对象(从GC ROOTS开始进行对象关联，慢) stop-world
+
+​      5.并发清理:清理垃圾对象，程序不会停顿
+
+​      6.并发重置:重置CMS收集器的数据结构     
+
+​    G1收集器(-XX:+UserG1GC,复制+标记-整理算法)
+
+#### GarBage First收集器的特点
+
+​     并行和并发
+
+​     分代收集
+
+​     空间整合
+
+​     可预测的停顿
+
+  将整个Java堆内存划分为多个大小相等的Region.
+
+  年轻代和老年代不再物理隔离
+
+   JDK11  Epsilon GC 和 ZGC
+
+#### GC相关的问题
+
+  Object的finalize()方法的作用是否与C++的析构函数作用相同?
+
+​    与C++的析构函数不同，析构函数调用确定，而它是不确定的
+
+​    将未被引用的对象放置与F-QUEUE队列中
+
+​    方法执行随时可能会被中止
+
+​    给予对象最后一次重生的机会
+
+#### Java中的强引用，软引用，弱引用，虚引用有什么作用
+
+​     强引用
+
+​         最普遍的引用:Object obj = new Object();
+
+​         抛出OutOfMemoryError终止程序也不会回收具有强引用的对象。
+
+​         通过将对象设置为null来弱化引用,使其被回收
+
+​    软引用
+
+​         对象处在有用但非必须的状态
+
+​         只有当内存空间不足时，GC会回收该引用的对象内存。
+
+​         可以用来实现内存敏感的高速缓存
+
+​        
+
+```java
+String str = new String ("abc");
+SoftReference<String> softRef = new SoftReference<String>(str);//软引用
+```
 
    
+
+​      弱引用
+
+​         非必须的对象，比软引用更弱一些
+
+​         GC时会被回收
+
+​         被回收的概率也不大，因为GC线程优先级比较低
+
+​         适用于引用偶尔被使用且不影响垃圾收集的对象
+
+```java
+String str = new String ("abc");
+WeakReference<String> weakRef = new WeakReference<String>(str);//弱引用
+```
+
+​      虚引用
+
+​          不会决定对象的生命周期
+
+​          任何时候都可能被垃圾回收期回收(相当于没有引用)
+
+​          跟踪对象被垃圾回收器回收的活动，起哨兵的作用
+
+​          必须和引用队列ReferenceQueue联合使用
+
+```java
+String str = new String ("abc");
+ReferenceQueue queue = new ReferenceQueue();
+PhantomReference ref = new PhantomReference(str,queue);
+```
+
+
+
+强>软>弱>虚
+
+引用队列
+
+​     无实际存储结构，存储逻辑依赖于内部节点之间的关系来表达  (进保存head节点,类似连表)
+
+​     存储关联的且被GC的软引用，弱引用以及虚引用
+
+
+
+​     
