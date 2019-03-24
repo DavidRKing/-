@@ -385,6 +385,23 @@ public static void main(){
 //jdk 7 没问题
 
 
+String s = new String ("a");
+s.intern();
+String s2 ="a";
+System.out.println(s==s2);
+
+String s3 = new String("a")+new String ("a");
+s3.intern();
+String a4 = "aa";
+System.out.println(s3==s4);
+//1.6+ false true
+//1.6 false false
+
+//"a","aa"直接在常量池中。 new String("a"),new String("aa") 直接在堆中创建出来
+//在jdk1.6中   s引用 java堆中地址。   s2引用java常量池中地址。 两个地址肯定不一样
+
+//对于jdk1.6+以上:
+//第一个是一样的。第二个。s3在堆中创建 aa。s3.intern()。将堆中引用复制到常量池中。此时，s4与s3地址一样
 ```
 
 
