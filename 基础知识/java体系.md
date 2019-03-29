@@ -168,6 +168,124 @@ HashMap:扩容的问题
 
 ​    哈希算法，扩容，性能
 
+##### HashTable
+
+​    早期Java类库提供的哈希表的实现
+
+​    线程安全：涉及到修改Hashtable的方法，使用synchronized修饰
+
+​    串行化的方式运行，效率差
+
+##### 如何优化HashTable?
+
+​    通过锁细粒度化，将整锁拆解成多个锁进行优化
+
+​    早期的ConcurrentHashMap：通过分段锁Segment来实现   (数组+链表)
+
+​    当前的ConcurrentHashMap:CAS+synchronized使锁更细化(数组+链表+红黑树)
+
+​    ConcurrentHashMap:put方法的逻辑
+
+​      1.判断Node[]数组是否初始化，没有则进行初始化操作
+
+​      2.通过hash定位数组的索引坐标，是否有Node节点，如果没有则使用CAS进行添加(链表头节点),添加失败则进入下次循环。
+
+​      3.检查到内部正在扩容，就帮助它一块扩容
+
+​      4.如果f!=null,则使用synchronized锁住f元素(链表/红黑二叉树的头元素)
+
+​         4.1如果Node(链表结构)则执行链表的添加操作。
+
+​         4.2如果是TreeNode(树形结构)则执行树添加操作。
+
+​      5.判断链表长度已经达到临界值8，当然这个8是默认值，大家也可以去做调整，当节点数超过这个值就需要把链表转换为树结构。
+
+​    ConcurrentHashMap总结：比起Segment,锁拆得更细。(hash不冲突，就不会锁)
+
+​        首先使用无锁操作CAS插入头节点，失败则循环尝试
+
+​        若头节点已存在，则尝试获取头节点的同步锁，再进行操作
+
+#####  ConcurrentHashMap:其他注意点
+
+​       size()方法和mappingCount()方法的异同，两者计算是否准确?
+
+​       多线程下如何进行扩容？
+
+##### 三者区别:
+
+​      hashMap线程不安全，数组+链表+红黑树
+
+​      Hashtable线程安全，锁住整个对象，数组+链表
+
+​      ConcurrentHashMap线程安全,CAS+同步锁,数组+链表+红黑树
+
+​      HashMap的key,value均可以为null,而其他的两个类不支持
+
+#### JUC包
+
+   CAS：atomic包的基础
+
+   AQS：locks包以及一些常用类比如Semophore，ReentrantLock等类的基础
+
+   线程执行器 executor
+
+   锁  locks
+
+   原子变量类 atomic
+
+   并发工具类 tools
+
+​        CountDownLatch:让主线程等待一组事件发生后继续执行
+
+​              事件指的是：CountDownLatch里的countDown()方法
+
+​        CyclicBarrier:阻塞当前线程，等待其他线程，
+
+​           等待其他线程，且会阻塞自己当前线程，所有线程必须同时到达栅栏位置后，才能继续执行；
+
+​           所有线程到达栅栏处，可以出发执行另外一个预先设置的线程
+
+​        Semaphore:控制某个资源可被同时访问的线程个数
+
+​        Exchanger:两个线程到达同步点后，相互交换数据
+
+​                             
+
+   并发集合collections
+
+​         BlockingQueue:提供可阻塞的入队和出队操作
+
+​         主要用于生产者-消费者模式，在多线程场景时生产者线程在队列尾部添加元素，而消费者线程则在队列头部消费元素，通过这种方式能够达到将任务生产和消费进行隔离的目的
+
+ArrayBlockingQueue:一个由数组结构组成的有界阻塞队列 (看源码)
+
+LinkkedBlockingQueue:一个由链表结构组成的有界/无界队列 (看源码)
+
+PriorityBlockingQueue:一个支持优先级排序的无界阻塞队列；(看源码)
+
+DealyQueue:一个使用优先级队实现的无界阻塞队列
+
+SynchronousQueue:一个不存储元素的阻塞队列
+
+LinkedTransferQueue:一个由链表结构组成的无界阻塞队列
+
+LinkedBlockingDeque:一个由链表结构组成的双向阻塞队列
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
